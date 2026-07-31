@@ -227,7 +227,7 @@ function render(raw){
   const today = new Date(); today.setHours(0,0,0,0);
   const rows = raw.map((r,i)=>({
     id:i,
-    proyek:r['Proyek']||'Tanpa Nama',
+    project:r['project']||'Tanpa Nama',
     fase:r['Fase']||'-',
     pic:r['PIC']||'-',
     start:parseDate(r['Tanggal Mulai']),
@@ -237,16 +237,16 @@ function render(raw){
     link:r['Link Referensi']||''
   }));
 
-  const projects = [...new Set(rows.map(r=>r.proyek))];
+  const projects = [...new Set(rows.map(r=>r.project))];
   const totalFase = rows.length;
   const selesai = rows.filter(r=>r.progress>=100).length;
   const onProgress = totalFase - selesai;
 
   document.getElementById('kpiRow').innerHTML = `
     <div class="kpi" style="--kpi-c:var(--blue)">
-      <div class="kpi-label">Jumlah Proyek</div>
+      <div class="kpi-label">Jumlah project</div>
       <div class="kpi-value">${projects.length}</div>
-      <div class="kpi-sub">Proyek terdaftar</div>
+      <div class="kpi-sub">project terdaftar</div>
     </div>
     <div class="kpi" style="--kpi-c:var(--orange)">
       <div class="kpi-label">Total Fase</div>
@@ -256,7 +256,7 @@ function render(raw){
     <div class="kpi" style="--kpi-c:var(--green)">
       <div class="kpi-label">Fase Selesai</div>
       <div class="kpi-value">${selesai}</div>
-      <div class="kpi-sub">dari ${totalFase} item proyek</div>
+      <div class="kpi-sub">dari ${totalFase} item project</div>
     </div>`;
 
   const statusColor = {'Selesai':'#1fb37a','On Progress':'#f2914d','Belum Mulai':'#94a3b8','Terlambat':'#e0525f'};
@@ -300,9 +300,9 @@ function render(raw){
                 <div><span class="legend-num">${l.count}</span><span class="legend-pct">${l.pct.toFixed(1)}%</span></div>
               </div>
               <ul class="status-list" id="list-status-${safeId(l.st)}">
-                ${[...new Set(l.items.map(it=>it.proyek))].map(proyek=>`
+                ${[...new Set(l.items.map(it=>it.project))].map(project=>`
                   <li>
-                    <span>${proyek}</span>
+                    <span>${project}</span>
                   </li>`).join('')}
               </ul>
             </div>`).join('')}
@@ -314,7 +314,7 @@ function render(raw){
     const st = statusOf(p.progress,p.start,p.end,today);
     return `
       <tr class="item-row" onclick="toggleRow(${p.id})">
-        <td class="proj-name">${p.proyek}</td>
+        <td class="proj-name">${p.project}</td>
         <td><div class="fase-name"><span class="chevron" id="chev-${p.id}">▶</span>${p.fase}</div></td>
         <td>${p.pic}</td>
         <td>${fmtDate(p.start)} → ${fmtDate(p.end)}</td>
@@ -355,7 +355,7 @@ function render(raw){
       <div class="card-sub">Seluruh fase dari Google Sheets &middot; klik baris untuk detail</div>
       <table>
         <thead><tr>
-          <th>Proyek</th><th>Fase</th><th>PIC</th><th>Tanggal</th><th>Progress</th><th>Status</th>
+          <th>project</th><th>Fase</th><th>PIC</th><th>Tanggal</th><th>Progress</th><th>Status</th>
         </tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
