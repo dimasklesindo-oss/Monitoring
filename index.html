@@ -68,7 +68,6 @@
   .live-badge{background:var(--green-bg);color:var(--green);font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.03em;}
   .card-sub{font-size:12.5px;color:var(--muted);margin:4px 0 16px;}
 
-  /* Style Filter Status Tabs */
   .filter-container {
     display: flex;
     gap: 8px;
@@ -144,6 +143,28 @@
     display:inline-flex;align-items:center;gap:6px;color:var(--blue);font-weight:600;font-size:13px;text-decoration:none;
   }
   .doc-link:hover{text-decoration:underline;}
+  
+  .note-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .note-title {
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   .pic-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
   .pic-name{font-weight:700;font-size:14px;}
   .pic-role{font-size:12px;color:var(--muted);margin-bottom:12px;}
@@ -207,8 +228,8 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxcXsHBi369pVFZ6TKFMq7X9JhL2ykfFG9xVXEJU9YyRNay89rchO1gsZ2xT-WRhboEDw/exec";
 
-let globalRowsData = []; // Menyimpan data global untuk penyaringan
-let activeFilter = 'Semua'; // Filter default
+let globalRowsData = [];
+let activeFilter = 'Semua';
 
 function parseDate(s){ if(!s) return null; const d=new Date(s); return isNaN(d)?null:d; }
 function fmtDate(d){ return d ? d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'; }
@@ -269,6 +290,7 @@ function render(raw){
       progress: progress,
       hp: r['PIC No HP']||'',
       link: r['Link Referensi']||'',
+      notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '', // Menerima header 'Notes' atau 'Catatan'
       statusLabel: stObj.label
     };
   });
@@ -350,7 +372,6 @@ function render(raw){
       <div class="card-title">Daftar Fase</div>
       <div class="card-sub">Seluruh fase dari Google Sheets &middot; klik baris untuk detail</div>
       
-      <!-- Filter Status Tabs -->
       <div class="filter-container">
         <button class="filter-btn active" onclick="filterStatus('Semua', this)">Semua (${totalFase})</button>
         <button class="filter-btn" onclick="filterStatus('On Progress', this)">On Progress (${statusItems['On Progress'].length})</button>
@@ -408,8 +429,15 @@ function renderTableRows(rows) {
             </div>
             <div>
               <div class="detail-col-label">Dokumen Pendukung</div>
-              ${p.link ? `<a class="doc-link" href="${p.link}" target="_blank" rel="noopener">📄 Buka Link Referensi</a>`
-                       : `<span class="no-data">Belum ada link referensi</span>`}
+              <div>
+                ${p.link ? `<a class="doc-link" href="${p.link}" target="_blank" rel="noopener">📄 Buka Link Referensi</a>`
+                         : `<span class="no-data">Belum ada link referensi</span>`}
+              </div>
+              ${p.notes ? `
+                <div class="note-box">
+                  <div class="note-title">📌 Notes</div>
+                  <div>${p.notes}</div>
+                </div>` : ''}
             </div>
           </div>
         </td>
@@ -419,18 +447,13 @@ function renderTableRows(rows) {
 
 function filterStatus(status, btnElement) {
   activeFilter = status;
-  
-  // Ubah tampilan aktif pada tombol filter
   document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
   btnElement.classList.add('active');
 
-  // Filter data sesuai status yang dipilih
   let filteredRows = globalRowsData;
   if (status !== 'Semua') {
     filteredRows = globalRowsData.filter(r => r.statusLabel === status);
   }
-
-  // Render ulang isi tabel saja tanpa me-refresh seluruh halaman
   document.getElementById('tableBody').innerHTML = renderTableRows(filteredRows);
 }
 
