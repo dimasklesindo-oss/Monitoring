@@ -69,7 +69,6 @@
   .live-badge{background:var(--green-bg);color:var(--green);font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.03em;}
   .card-sub{font-size:12.5px;color:var(--muted);margin:4px 0 16px;}
 
-  /* Controls Section: Filter & Search */
   .controls-row {
     display: flex;
     justify-content: space-between;
@@ -152,7 +151,6 @@
   .progress-fill{height:100%;border-radius:10px;}
   .badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap;}
 
-  /* Tag Sisa Hari / Overdue Deadline */
   .days-tag {
     display: block;
     font-size: 11px;
@@ -277,7 +275,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxcXsHBi369pVFZ6TKFMq7X9JhL2ykfFG9xVXEJU9YyRNay89rchO1gsZ2xT-WRhboEDw/exec";
 
 let globalRowsData = [];
-let currentFilteredData = []; // Menyimpan data yang sedang terfilter untuk diexport
+let currentFilteredData = [];
 let activeFilter = 'Semua';
 let activeSearch = '';
 let activePic = 'Semua';
@@ -310,34 +308,40 @@ function getDaysRemaining(end, progress, today) {
   return { text: `📅 Sisa ${diffDays} hari`, class: 'normal' };
 }
 
+// Fungsi Parser Teks Notes yang Sudah Diperbaiki
 function parseNotesToHTML(text) {
   if (!text) return '';
-  let cleanText = text.replace(/\n/g, ' ');
-  cleanText = cleanText.replace(/(\[[^\]]+\])/g, '||SECTION||$1');
-  cleanText = cleanText.replace(/\s*(Services|Products|Others):/gi, '||SUB||$1:');
-  cleanText = cleanText.replace(/•/g, '||ITEM||');
   
-  const parts = cleanText.split('||').filter(p => p.trim().length > 0);
+  let cleanText = text.replace(/\n/g, ' ');
+
+  cleanText = cleanText.replace(/(\[[^\]]+\])/g, '___SECTION___$1');
+  cleanText = cleanText.replace(/\s*(Services|Products|Others):/gi, '___SUB___$1:');
+  cleanText = cleanText.replace(/•/g, '___ITEM___');
+
+  const parts = cleanText.split(/(?=___SECTION___|___SUB___|___ITEM___)/g);
+  
   let htmlResult = '';
   let inList = false;
 
-  parts.forEach(p => {
-    let part = p.trim();
-    if (part.startsWith('SECTION||')) {
+  parts.forEach(rawPart => {
+    let part = rawPart.trim();
+    if (!part) return;
+
+    if (part.startsWith('___SECTION___')) {
       if (inList) { htmlResult += '</ul>'; inList = false; }
-      htmlResult += `<div class="note-section-heading">${part.replace('SECTION||', '')}</div>`;
-    } else if (part.startsWith('SUB||')) {
+      const content = part.replace('___SECTION___', '').trim();
+      htmlResult += `<div class="note-section-heading">${content}</div>`;
+    } else if (part.startsWith('___SUB___')) {
       if (inList) { htmlResult += '</ul>'; inList = false; }
-      htmlResult += `<div class="note-subheading">${part.replace('SUB||', '')}</div>`;
-    } else if (part.startsWith('ITEM||')) {
+      const content = part.replace('___SUB___', '').trim();
+      htmlResult += `<div class="note-subheading">${content}</div>`;
+    } else if (part.startsWith('___ITEM___')) {
       if (!inList) { htmlResult += '<ul class="note-list">'; inList = true; }
-      const itemText = part.replace('ITEM||', '').trim();
-      if (itemText) htmlResult += `<li>${itemText}</li>`;
+      const content = part.replace('___ITEM___', '').trim();
+      if (content) htmlResult += `<li>${content}</li>`;
     } else {
-      if (part.length > 0) {
-        if (inList) { htmlResult += '</ul>'; inList = false; }
-        htmlResult += `<div>${part}</div>`;
-      }
+      if (inList) { htmlResult += '</ul>'; inList = false; }
+      htmlResult += `<div>${part}</div>`;
     }
   });
 
@@ -394,7 +398,7 @@ function render(raw){
     };
   });
 
-  currentFilteredData = [...globalRowsData]; // Simpan awal
+  currentFilteredData = [...globalRowsData];
 
   const projects = [...new Set(globalRowsData.map(r=>r.project))];
   const totalFase = globalRowsData.length;
@@ -578,7 +582,7 @@ function applyCombinedFilters() {
     );
   }
 
-  currentFilteredData = filtered; // Update data terfilter saat ini
+  currentFilteredData = filtered;
   document.getElementById('tableBody').innerHTML = renderTableRows(filtered);
 }
 
@@ -599,19 +603,16 @@ function searchData(query) {
   applyCombinedFilters();
 }
 
-// FUNGSI EXPORT KE CSV / EXCEL
 function exportToCSV() {
   if (!currentFilteredData || currentFilteredData.length === 0) {
     alert("Tidak ada data untuk diexport!");
     return;
   }
 
-  // Header CSV
   const headers = ["Project", "Fase", "PIC", "PIC No HP", "Tanggal Mulai", "Tanggal Selesai", "Progress (%)", "Status", "Link Referensi", "Notes"];
   
-  // Baris Data
   const csvRows = currentFilteredData.map(r => {
-    const safeText = text => `"${String(text || '').replace(/"/g, '""')}"`; // Mencegah karakter koma merusak format kolom
+    const safeText = text => `"${String(text || '').replace(/"/g, '""')}"`;
     return [
       safeText(r.project),
       safeText(r.fase),
@@ -626,10 +627,8 @@ function exportToCSV() {
     ].join(",");
   });
 
-  // Gabungkan Header & Baris Data
-  const csvContent = "\uFEFF" + [headers.join(","), ...csvRows].join("\n"); // \uFEFF adalah UTF-8 BOM untuk Excel
+  const csvContent = "\uFEFF" + [headers.join(","), ...csvRows].join("\n");
 
-  // Buat File & Auto-Download
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
