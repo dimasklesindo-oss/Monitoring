@@ -146,20 +146,21 @@
   
   .note-box {
     margin-top: 10px;
-    padding: 10px 12px;
+    padding: 12px 14px;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 12.5px;
     color: var(--text);
-    line-height: 1.4;
+    line-height: 1.5;
+    white-space: pre-line; /* Mempertahankan Enter & Bullet Points dari Google Sheets */
   }
   .note-title {
     font-weight: 700;
     color: var(--muted);
     font-size: 11px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -290,7 +291,7 @@ function render(raw){
       progress: progress,
       hp: r['PIC No HP']||'',
       link: r['Link Referensi']||'',
-      notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '', // Menerima header 'Notes' atau 'Catatan'
+      notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '',
       statusLabel: stObj.label
     };
   });
@@ -435,7 +436,7 @@ function renderTableRows(rows) {
               </div>
               ${p.notes ? `
                 <div class="note-box">
-                  <div class="note-title">📌 Notes</div>
+                  <div class="note-title">📌 NOTES</div>
                   <div>${p.notes}</div>
                 </div>` : ''}
             </div>
