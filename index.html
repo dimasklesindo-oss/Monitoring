@@ -227,7 +227,7 @@ function render(raw){
   const today = new Date(); today.setHours(0,0,0,0);
   const rows = raw.map((r,i)=>({
     id:i,
-    project:r['project']||'Tanpa Nama',
+    project:r['Project']||'Tanpa Nama', // Sudah diperbaiki jadi 'Project'
     fase:r['Fase']||'-',
     pic:r['PIC']||'-',
     start:parseDate(r['Tanggal Mulai']),
