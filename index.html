@@ -38,13 +38,14 @@
   .header p{margin:6px 0 0;color:#c3d0e6;font-size:14px;}
   .sync-block{text-align:right;}
   .sync-time{font-size:12.5px;color:#b7c6de;margin-bottom:10px;}
-  .refresh-btn{
-    background:#fff;color:var(--navy);border:none;padding:10px 18px;border-radius:8px;
+  .action-btns{display:flex;gap:8px;justify-content:flex-end;}
+  .refresh-btn, .print-btn{
+    background:#fff;color:var(--navy);border:none;padding:10px 16px;border-radius:8px;
     font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
     box-shadow:0 4px 14px rgba(0,0,0,.15);transition:.15s;
   }
-  .refresh-btn:hover{transform:translateY(-1px);}
-  .refresh-btn svg{width:14px;height:14px;}
+  .refresh-btn:hover, .print-btn:hover{transform:translateY(-1px);}
+  .refresh-btn svg, .print-btn svg{width:14px;height:14px;}
 
   .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
   .kpi-row{
@@ -68,11 +69,19 @@
   .live-badge{background:var(--green-bg);color:var(--green);font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:.03em;}
   .card-sub{font-size:12.5px;color:var(--muted);margin:4px 0 16px;}
 
+  /* Controls Section: Filter & Search */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
   .filter-container {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 20px;
   }
   .filter-btn {
     background: var(--gray-bg);
@@ -85,15 +94,23 @@
     cursor: pointer;
     transition: all .15s ease;
   }
-  .filter-btn:hover {
-    background: #e2e8f0;
-    color: var(--text);
+  .filter-btn:hover { background: #e2e8f0; color: var(--text); }
+  .filter-btn.active { background: var(--navy); color: #ffffff; border-color: var(--navy); }
+
+  .search-pic-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
   }
-  .filter-btn.active {
-    background: var(--navy);
-    color: #ffffff;
-    border-color: var(--navy);
+  .search-input, .pic-select {
+    padding: 7px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    outline: none;
+    font-family: inherit;
   }
+  .search-input:focus, .pic-select:focus { border-color: var(--blue); }
 
   .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;}
   .donut{width:170px;height:170px;border-radius:50%;position:relative;}
@@ -135,6 +152,18 @@
   .progress-fill{height:100%;border-radius:10px;}
   .badge{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;white-space:nowrap;}
 
+  /* Tag Sisa Hari / Overdue Deadline */
+  .days-tag {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 3px;
+  }
+  .days-tag.urgent { color: var(--red); }
+  .days-tag.warning { color: var(--orange); }
+  .days-tag.normal { color: var(--muted); }
+  .days-tag.done { color: var(--green); }
+
   .detail-row td{background:#fafbfd;padding:0;border-bottom:1px solid var(--border);}
   .detail-inner{padding:18px 20px 22px 34px;display:grid;grid-template-columns:1fr 1fr;gap:24px;}
   @media(max-width:700px){.detail-inner{grid-template-columns:1fr;}}
@@ -146,25 +175,28 @@
   
   .note-box {
     margin-top: 10px;
-    padding: 12px 14px;
+    padding: 14px 16px;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 12.5px;
     color: var(--text);
-    line-height: 1.5;
-    white-space: pre-line; /* Mempertahankan Enter & Bullet Points dari Google Sheets */
+    line-height: 1.6;
   }
   .note-title {
     font-weight: 700;
     color: var(--muted);
     font-size: 11px;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     gap: 4px;
   }
+  .note-section-heading { font-weight: 700; color: var(--navy); margin: 12px 0 6px 0; font-size: 13px; }
+  .note-subheading { font-weight: 600; color: var(--muted); margin: 8px 0 4px 0; font-size: 12px; }
+  .note-list { margin: 0 0 10px 0; padding-left: 18px; }
+  .note-list li { margin-bottom: 4px; }
 
   .pic-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
   .pic-name{font-weight:700;font-size:14px;}
@@ -193,6 +225,14 @@
     border-top: 1px solid var(--border);
     margin-top: 20px;
   }
+
+  /* Style Cetak/Print PDF */
+  @media print {
+    .refresh-btn, .print-btn, .filter-container, .search-pic-group, .sync-time { display: none !important; }
+    .header { padding: 16px; background: var(--navy) !important; color: white !important; }
+    .kpi-row { margin-top: 0; }
+    .card { box-shadow: none; border: 1px solid #ccc; }
+  }
 </style>
 </head>
 <body>
@@ -204,10 +244,15 @@
       </div>
       <div class="sync-block">
         <div class="sync-time" id="syncTime">Menyinkronkan...</div>
-        <button class="refresh-btn" onclick="loadData()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
-          Refresh Data
-        </button>
+        <div class="action-btns">
+          <button class="print-btn" onclick="window.print()">
+            🖨️ Cetak / PDF
+          </button>
+          <button class="refresh-btn" onclick="loadData()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+            Refresh Data
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -231,6 +276,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxcXsHBi369pVFZ6TKFMq7X
 
 let globalRowsData = [];
 let activeFilter = 'Semua';
+let activeSearch = '';
+let activePic = 'Semua';
 
 function parseDate(s){ if(!s) return null; const d=new Date(s); return isNaN(d)?null:d; }
 function fmtDate(d){ return d ? d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-'; }
@@ -245,6 +292,56 @@ function statusOf(progress,start,end,today){
   if(end && end<today) return {label:'Terlambat', c:'var(--red)', bg:'var(--red-bg)'};
   if(start && start>today) return {label:'Belum Mulai', c:'var(--muted)', bg:'var(--gray-bg)'};
   return {label:'On Progress', c:'var(--orange)', bg:'var(--orange-bg)'};
+}
+
+// Menghitung sisa hari deadline
+function getDaysRemaining(end, progress, today) {
+  if (progress >= 100) return { text: '✓ Selesai', class: 'done' };
+  if (!end) return { text: '', class: '' };
+  
+  const diffTime = end - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return { text: `⚠️ Terlewat ${Math.abs(diffDays)} hari`, class: 'urgent' };
+  if (diffDays === 0) return { text: '⏰ Tenggat hari ini!', class: 'urgent' };
+  if (diffDays <= 3) return { text: `⏳ Sisa ${diffDays} hari lagi`, class: 'warning' };
+  return { text: `📅 Sisa ${diffDays} hari`, class: 'normal' };
+}
+
+// Parser Text Notes ke List HTML
+function parseNotesToHTML(text) {
+  if (!text) return '';
+  let cleanText = text.replace(/\n/g, ' ');
+  cleanText = cleanText.replace(/(\[[^\]]+\])/g, '||SECTION||$1');
+  cleanText = cleanText.replace(/\s*(Services|Products|Others):/gi, '||SUB||$1:');
+  cleanText = cleanText.replace(/•/g, '||ITEM||');
+  
+  const parts = cleanText.split('||').filter(p => p.trim().length > 0);
+  let htmlResult = '';
+  let inList = false;
+
+  parts.forEach(p => {
+    let part = p.trim();
+    if (part.startsWith('SECTION||')) {
+      if (inList) { htmlResult += '</ul>'; inList = false; }
+      htmlResult += `<div class="note-section-heading">${part.replace('SECTION||', '')}</div>`;
+    } else if (part.startsWith('SUB||')) {
+      if (inList) { htmlResult += '</ul>'; inList = false; }
+      htmlResult += `<div class="note-subheading">${part.replace('SUB||', '')}</div>`;
+    } else if (part.startsWith('ITEM||')) {
+      if (!inList) { htmlResult += '<ul class="note-list">'; inList = true; }
+      const itemText = part.replace('ITEM||', '').trim();
+      if (itemText) htmlResult += `<li>${itemText}</li>`;
+    } else {
+      if (part.length > 0) {
+        if (inList) { htmlResult += '</ul>'; inList = false; }
+        htmlResult += `<div>${part}</div>`;
+      }
+    }
+  });
+
+  if (inList) htmlResult += '</ul>';
+  return htmlResult;
 }
 
 async function loadData(){
@@ -301,6 +398,9 @@ function render(raw){
   const selesai = globalRowsData.filter(r=>r.progress>=100).length;
   const onProgress = totalFase - selesai;
 
+  // Daftar PIC Unik
+  const allPics = [...new Set(globalRowsData.flatMap(r=>r.pic.split(',').map(s=>s.trim())))].filter(Boolean);
+
   document.getElementById('kpiRow').innerHTML = `
     <div class="kpi" style="--kpi-c:var(--blue)">
       <div class="kpi-label">Jumlah project</div>
@@ -320,13 +420,10 @@ function render(raw){
 
   const statusColor = {'Selesai':'#1fb37a','On Progress':'#f2914d','Belum Mulai':'#94a3b8','Terlambat':'#e0525f'};
   const statusItems = {'On Progress':[], 'Selesai':[], 'Terlambat':[], 'Belum Mulai':[]};
-  globalRowsData.forEach(r=>{
-    statusItems[r.statusLabel].push(r);
-  });
+  globalRowsData.forEach(r=> statusItems[r.statusLabel].push(r));
   const order = ['On Progress','Selesai','Terlambat','Belum Mulai'];
-  let acc = 0;
-  let gradientParts = [];
-  const legendRows = [];
+  let acc = 0, gradientParts = [], legendRows = [];
+  
   order.forEach(st=>{
     const items = statusItems[st];
     if(!items.length) return;
@@ -359,9 +456,7 @@ function render(raw){
               </div>
               <ul class="status-list" id="list-status-${safeId(l.st)}">
                 ${[...new Set(l.items.map(it=>it.project))].map(project=>`
-                  <li>
-                    <span>${project}</span>
-                  </li>`).join('')}
+                  <li><span>${project}</span></li>`).join('')}
               </ul>
             </div>`).join('')}
         </div>
@@ -373,12 +468,24 @@ function render(raw){
       <div class="card-title">Daftar Fase</div>
       <div class="card-sub">Seluruh fase dari Google Sheets &middot; klik baris untuk detail</div>
       
-      <div class="filter-container">
-        <button class="filter-btn active" onclick="filterStatus('Semua', this)">Semua (${totalFase})</button>
-        <button class="filter-btn" onclick="filterStatus('On Progress', this)">On Progress (${statusItems['On Progress'].length})</button>
-        <button class="filter-btn" onclick="filterStatus('Selesai', this)">Selesai (${statusItems['Selesai'].length})</button>
-        <button class="filter-btn" onclick="filterStatus('Terlambat', this)">Terlambat (${statusItems['Terlambat'].length})</button>
-        <button class="filter-btn" onclick="filterStatus('Belum Mulai', this)">Belum Mulai (${statusItems['Belum Mulai'].length})</button>
+      <!-- Controls Row: Filter, Search, PIC -->
+      <div class="controls-row">
+        <div class="filter-container">
+          <button class="filter-btn active" onclick="filterStatus('Semua', this)">Semua (${totalFase})</button>
+          <button class="filter-btn" onclick="filterStatus('On Progress', this)">On Progress (${statusItems['On Progress'].length})</button>
+          <button class="filter-btn" onclick="filterStatus('Selesai', this)">Selesai (${statusItems['Selesai'].length})</button>
+          <button class="filter-btn" onclick="filterStatus('Terlambat', this)">Terlambat (${statusItems['Terlambat'].length})</button>
+          <button class="filter-btn" onclick="filterStatus('Belum Mulai', this)">Belum Mulai (${statusItems['Belum Mulai'].length})</button>
+        </div>
+
+        <div class="search-pic-group">
+          <select class="pic-select" onchange="filterPic(this.value)">
+            <option value="Semua">👤 Semua PIC</option>
+            ${allPics.map(pic=>`<option value="${pic}">${pic}</option>`).join('')}
+          </select>
+
+          <input type="text" class="search-input" placeholder="🔍 Cari project / fase..." oninput="searchData(this.value)">
+        </div>
       </div>
 
       <table>
@@ -397,16 +504,22 @@ function render(raw){
 function renderTableRows(rows) {
   const today = new Date(); today.setHours(0,0,0,0);
   if(rows.length === 0) {
-    return `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Tidak ada fase dengan status ini.</td></tr>`;
+    return `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted);">Tidak ada fase yang sesuai dengan filter/pencarian.</td></tr>`;
   }
   return rows.map(p=>{
     const st = statusOf(p.progress, p.start, p.end, today);
+    const dayInfo = getDaysRemaining(p.end, p.progress, today);
+    const parsedNotes = parseNotesToHTML(p.notes);
+
     return `
       <tr class="item-row" onclick="toggleRow(${p.id})">
         <td class="proj-name">${p.project}</td>
         <td><div class="fase-name"><span class="chevron" id="chev-${p.id}">▶</span>${p.fase}</div></td>
         <td>${p.pic}</td>
-        <td>${fmtDate(p.start)} → ${fmtDate(p.end)}</td>
+        <td>
+          ${fmtDate(p.start)} → ${fmtDate(p.end)}
+          <span class="days-tag ${dayInfo.class}">${dayInfo.text}</span>
+        </td>
         <td>
           <div class="progress-bar"><div class="progress-fill" style="width:${p.progress}%;background:${st.c}"></div></div>
           ${p.progress}%
@@ -437,7 +550,7 @@ function renderTableRows(rows) {
               ${p.notes ? `
                 <div class="note-box">
                   <div class="note-title">📌 NOTES</div>
-                  <div>${p.notes}</div>
+                  ${parsedNotes}
                 </div>` : ''}
             </div>
           </div>
@@ -446,16 +559,48 @@ function renderTableRows(rows) {
   }).join('');
 }
 
+// Logika Gabungan Filter: Status + PIC + Search Bar
+function applyCombinedFilters() {
+  let filtered = globalRowsData;
+
+  // Filter Status
+  if (activeFilter !== 'Semua') {
+    filtered = filtered.filter(r => r.statusLabel === activeFilter);
+  }
+
+  // Filter PIC
+  if (activePic !== 'Semua') {
+    filtered = filtered.filter(r => r.pic.toLowerCase().includes(activePic.toLowerCase()));
+  }
+
+  // Filter Search Query
+  if (activeSearch.trim() !== '') {
+    const q = activeSearch.toLowerCase();
+    filtered = filtered.filter(r => 
+      r.project.toLowerCase().includes(q) || 
+      r.fase.toLowerCase().includes(q) || 
+      r.pic.toLowerCase().includes(q)
+    );
+  }
+
+  document.getElementById('tableBody').innerHTML = renderTableRows(filtered);
+}
+
 function filterStatus(status, btnElement) {
   activeFilter = status;
   document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
   btnElement.classList.add('active');
+  applyCombinedFilters();
+}
 
-  let filteredRows = globalRowsData;
-  if (status !== 'Semua') {
-    filteredRows = globalRowsData.filter(r => r.statusLabel === status);
-  }
-  document.getElementById('tableBody').innerHTML = renderTableRows(filteredRows);
+function filterPic(picName) {
+  activePic = picName;
+  applyCombinedFilters();
+}
+
+function searchData(query) {
+  activeSearch = query;
+  applyCombinedFilters();
 }
 
 function toggleStatusList(id){
