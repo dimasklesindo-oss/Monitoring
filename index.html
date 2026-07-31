@@ -39,13 +39,13 @@
   .sync-block{text-align:right;}
   .sync-time{font-size:12.5px;color:#b7c6de;margin-bottom:10px;}
   .action-btns{display:flex;gap:8px;justify-content:flex-end;}
-  .refresh-btn, .print-btn{
+  .refresh-btn, .print-btn, .export-btn{
     background:#fff;color:var(--navy);border:none;padding:10px 16px;border-radius:8px;
     font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;
     box-shadow:0 4px 14px rgba(0,0,0,.15);transition:.15s;
   }
-  .refresh-btn:hover, .print-btn:hover{transform:translateY(-1px);}
-  .refresh-btn svg, .print-btn svg{width:14px;height:14px;}
+  .refresh-btn:hover, .print-btn:hover, .export-btn:hover{transform:translateY(-1px);}
+  .refresh-btn svg, .print-btn svg, .export-btn svg{width:14px;height:14px;}
 
   .wrap{max-width:1180px;margin:0 auto;padding:0 24px;}
   .kpi-row{
@@ -226,9 +226,8 @@
     margin-top: 20px;
   }
 
-  /* Style Cetak/Print PDF */
   @media print {
-    .refresh-btn, .print-btn, .filter-container, .search-pic-group, .sync-time { display: none !important; }
+    .refresh-btn, .print-btn, .export-btn, .filter-container, .search-pic-group, .sync-time { display: none !important; }
     .header { padding: 16px; background: var(--navy) !important; color: white !important; }
     .kpi-row { margin-top: 0; }
     .card { box-shadow: none; border: 1px solid #ccc; }
@@ -245,6 +244,9 @@
       <div class="sync-block">
         <div class="sync-time" id="syncTime">Menyinkronkan...</div>
         <div class="action-btns">
+          <button class="export-btn" onclick="exportToCSV()">
+            📥 Export CSV
+          </button>
           <button class="print-btn" onclick="window.print()">
             🖨️ Cetak / PDF
           </button>
@@ -275,6 +277,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxcXsHBi369pVFZ6TKFMq7X9JhL2ykfFG9xVXEJU9YyRNay89rchO1gsZ2xT-WRhboEDw/exec";
 
 let globalRowsData = [];
+let currentFilteredData = []; // Menyimpan data yang sedang terfilter untuk diexport
 let activeFilter = 'Semua';
 let activeSearch = '';
 let activePic = 'Semua';
@@ -294,7 +297,6 @@ function statusOf(progress,start,end,today){
   return {label:'On Progress', c:'var(--orange)', bg:'var(--orange-bg)'};
 }
 
-// Menghitung sisa hari deadline
 function getDaysRemaining(end, progress, today) {
   if (progress >= 100) return { text: '✓ Selesai', class: 'done' };
   if (!end) return { text: '', class: '' };
@@ -308,7 +310,6 @@ function getDaysRemaining(end, progress, today) {
   return { text: `📅 Sisa ${diffDays} hari`, class: 'normal' };
 }
 
-// Parser Text Notes ke List HTML
 function parseNotesToHTML(text) {
   if (!text) return '';
   let cleanText = text.replace(/\n/g, ' ');
@@ -393,12 +394,13 @@ function render(raw){
     };
   });
 
+  currentFilteredData = [...globalRowsData]; // Simpan awal
+
   const projects = [...new Set(globalRowsData.map(r=>r.project))];
   const totalFase = globalRowsData.length;
   const selesai = globalRowsData.filter(r=>r.progress>=100).length;
   const onProgress = totalFase - selesai;
 
-  // Daftar PIC Unik
   const allPics = [...new Set(globalRowsData.flatMap(r=>r.pic.split(',').map(s=>s.trim())))].filter(Boolean);
 
   document.getElementById('kpiRow').innerHTML = `
@@ -468,7 +470,6 @@ function render(raw){
       <div class="card-title">Daftar Fase</div>
       <div class="card-sub">Seluruh fase dari Google Sheets &middot; klik baris untuk detail</div>
       
-      <!-- Controls Row: Filter, Search, PIC -->
       <div class="controls-row">
         <div class="filter-container">
           <button class="filter-btn active" onclick="filterStatus('Semua', this)">Semua (${totalFase})</button>
@@ -559,21 +560,15 @@ function renderTableRows(rows) {
   }).join('');
 }
 
-// Logika Gabungan Filter: Status + PIC + Search Bar
 function applyCombinedFilters() {
   let filtered = globalRowsData;
 
-  // Filter Status
   if (activeFilter !== 'Semua') {
     filtered = filtered.filter(r => r.statusLabel === activeFilter);
   }
-
-  // Filter PIC
   if (activePic !== 'Semua') {
     filtered = filtered.filter(r => r.pic.toLowerCase().includes(activePic.toLowerCase()));
   }
-
-  // Filter Search Query
   if (activeSearch.trim() !== '') {
     const q = activeSearch.toLowerCase();
     filtered = filtered.filter(r => 
@@ -583,6 +578,7 @@ function applyCombinedFilters() {
     );
   }
 
+  currentFilteredData = filtered; // Update data terfilter saat ini
   document.getElementById('tableBody').innerHTML = renderTableRows(filtered);
 }
 
@@ -601,6 +597,49 @@ function filterPic(picName) {
 function searchData(query) {
   activeSearch = query;
   applyCombinedFilters();
+}
+
+// FUNGSI EXPORT KE CSV / EXCEL
+function exportToCSV() {
+  if (!currentFilteredData || currentFilteredData.length === 0) {
+    alert("Tidak ada data untuk diexport!");
+    return;
+  }
+
+  // Header CSV
+  const headers = ["Project", "Fase", "PIC", "PIC No HP", "Tanggal Mulai", "Tanggal Selesai", "Progress (%)", "Status", "Link Referensi", "Notes"];
+  
+  // Baris Data
+  const csvRows = currentFilteredData.map(r => {
+    const safeText = text => `"${String(text || '').replace(/"/g, '""')}"`; // Mencegah karakter koma merusak format kolom
+    return [
+      safeText(r.project),
+      safeText(r.fase),
+      safeText(r.pic),
+      safeText(r.hp),
+      safeText(fmtDate(r.start)),
+      safeText(fmtDate(r.end)),
+      r.progress,
+      safeText(r.statusLabel),
+      safeText(r.link),
+      safeText(r.notes)
+    ].join(",");
+  });
+
+  // Gabungkan Header & Baris Data
+  const csvContent = "\uFEFF" + [headers.join(","), ...csvRows].join("\n"); // \uFEFF adalah UTF-8 BOM untuk Excel
+
+  // Buat File & Auto-Download
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const dateStr = new Date().toISOString().slice(0,10);
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Monitoring_Tim_Desain_${dateStr}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function toggleStatusList(id){
