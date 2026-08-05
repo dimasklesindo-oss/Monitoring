@@ -276,7 +276,6 @@
     margin-top: 20px;
   }
 
-  /* MEDIA QUERY KHUSUS TAMPILAN HP / TABLET */
   @media (max-width: 850px) {
     .header { padding: 24px 16px 50px; }
     .wrap { padding: 0 16px; }
@@ -482,7 +481,8 @@ function render(raw){
       end: end,
       progress: progress,
       hp: r['PIC No HP']||'',
-      link: r['Link Final File']||'',
+      /* MEMBACA KOLOM 'Final File' DENGAN FALLBACK */
+      link: r['Final File'] || r['final file'] || r['Link Final File'] || r['Link Referensi'] || '',
       notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '',
       statusLabel: stObj.label
     };
