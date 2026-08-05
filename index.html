@@ -482,7 +482,7 @@ function render(raw){
       end: end,
       progress: progress,
       hp: r['PIC No HP']||'',
-      link: r['Link Referensi']||'',
+      link: r['Link Final File']||'',
       notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '',
       statusLabel: stObj.label
     };
@@ -641,8 +641,8 @@ function renderTableRows(rows) {
             <div>
               <div class="detail-col-label">Dokumen Pendukung</div>
               <div>
-                ${p.link ? `<a class="doc-link" href="${p.link}" target="_blank" rel="noopener">📄 Buka Link Referensi</a>`
-                         : `<span class="no-data">Belum ada link referensi</span>`}
+                ${p.link ? `<a class="doc-link" href="${p.link}" target="_blank" rel="noopener">📄 Buka Link Final File</a>`
+                         : `<span class="no-data">Belum ada link Final File</span>`}
               </div>
               ${p.notes ? `
                 <div class="note-box">
@@ -701,7 +701,7 @@ function exportToCSV() {
     return;
   }
 
-  const headers = ["Project", "Fase", "PIC", "PIC No HP", "Tanggal Mulai", "Tanggal Selesai", "Progress (%)", "Status", "Link Referensi", "Notes"];
+  const headers = ["Project", "Fase", "PIC", "PIC No HP", "Tanggal Mulai", "Tanggal Selesai", "Progress (%)", "Status", "Final File", "Notes"];
   
   const csvRows = currentFilteredData.map(r => {
     const safeText = text => `"${String(text || '').replace(/"/g, '""')}"`;
