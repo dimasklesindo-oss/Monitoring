@@ -48,7 +48,7 @@
     margin:0;
     padding:0;
     width:100%;
-    overflow-x:hidden; /* Mencegah layar goyang ke samping */
+    overflow-x:hidden;
     background:var(--bg);
     color:var(--text);
     font-family:'Inter',sans-serif;
@@ -247,6 +247,22 @@
   .note-subheading { font-weight: 600; color: var(--muted); margin: 8px 0 4px 0; font-size: 12px; }
   .note-list { margin: 0 0 10px 0; padding-left: 18px; }
   .note-list li { margin-bottom: 4px; }
+  
+  /* Style khusus untuk link aktif di dalam Notes */
+  .note-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--gray-bg);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin: 2px 0;
+    word-break: break-all;
+  }
+  .note-link:hover { text-decoration: underline; }
 
   .pic-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
   .pic-name{font-weight:700;font-size:14px;}
@@ -399,10 +415,17 @@ function getDaysRemaining(end, progress, today) {
   return { text: `📅 Sisa ${diffDays} hari`, class: 'normal' };
 }
 
+// PARSER NOTES (SUDAH BISA DETEKSI & UBAH LINK MENJADI BISA DI-KLIK)
 function parseNotesToHTML(text) {
   if (!text) return '';  
-  let cleanText = text.replace(/\n/g, ' ');
+  
+  let cleanText = text;
 
+  // 1. Otomatis ubah URL Teks (http/https) menjadi Link / Button Aktif
+  cleanText = cleanText.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" class="note-link">🔗 Buka Link / File</a>');
+
+  // 2. Format struktur bullet/section
+  cleanText = cleanText.replace(/\n/g, ' ');
   cleanText = cleanText.replace(/(\[[^\]]+\])/g, '___SECTION___$1');
   cleanText = cleanText.replace(/\s*(Services|Products|Others):/gi, '___SUB___$1:');
   cleanText = cleanText.replace(/•/g, '___ITEM___');
@@ -481,7 +504,6 @@ function render(raw){
       end: end,
       progress: progress,
       hp: r['PIC No HP']||'',
-      /* MEMBACA KOLOM 'Final File' DENGAN FALLBACK */
       link: r['Final File'] || r['final file'] || r['Link Final File'] || r['Link Referensi'] || '',
       notes: r['Notes'] || r['notes'] || r['Catatan'] || r['catatan'] || '',
       statusLabel: stObj.label
