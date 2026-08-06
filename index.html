@@ -422,7 +422,7 @@ function parseNotesToHTML(text) {
   let cleanText = text;
 
   // 1. Otomatis ubah URL Teks (http/https) menjadi Link / Button Aktif
-  cleanText = cleanText.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" class="note-link">🔗 Buka Link / File</a>');
+  cleanText = cleanText.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener" class="note-link">📝 Lihat Detail Revisi</a>');
 
   // 2. Format struktur bullet/section
   cleanText = cleanText.replace(/\n/g, ' ');
